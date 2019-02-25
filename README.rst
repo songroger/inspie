@@ -33,4 +33,6 @@ It’s the freedom to manage instagram api on an easy way.
     caption = "#tag caption!"
     i.upload_photo(photo_path, caption=caption)
 
-see more in examples
+see more in examples_
+
+.. _examples: ./examples
