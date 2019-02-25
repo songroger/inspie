@@ -1,8 +1,11 @@
 import requests
 import json
 import hashlib
+import math
 import time
+import copy
 from requests_toolbelt import MultipartEncoder
+from moviepy.editor import VideoFileClip
 from .utils import generate_UUID, generate_signature, generate_device_id, get_image_size
 from .config import API_URL, USER_AGENT, EXPERIMENTS, DEVICE_SETTINTS
 
@@ -131,6 +134,34 @@ class InspieAPI(object):
                            }})
         return self.send_request('media/configure/?', generate_signature(data))
 
+    def video_configure(self, upload_id, video, thumbnail, caption=''):
+        clip = VideoFileClip(video)
+        self.upload_photo(photo=thumbnail, caption=caption, upload_id=upload_id)
+        data = json.dumps({
+            'upload_id': upload_id,
+            'source_type': 3,
+            'poster_frame_index': 0,
+            'length': 0.00,
+            'audio_muted': False,
+            'filter_type': 0,
+            'video_result': 'deprecated',
+            'clips': {
+                'length': clip.duration,
+                'source_type': '3',
+                'camera_position': 'back',
+            },
+            'extra': {
+                'source_width': clip.size[0],
+                'source_height': clip.size[1],
+            },
+            'device': self.DEVICE_SETTINTS,
+            '_csrftoken': self.token,
+            '_uuid': self.uuid,
+            '_uid': self.username_id,
+            'caption': caption,
+        })
+        return self.send_request('media/configure/?video=1', generate_signature(data))
+
     def upload_photo(self, photo, caption=None, upload_id=None, is_sidecar=None):
         if upload_id is None:
             upload_id = str(int(time.time() * 1000))
@@ -157,6 +188,69 @@ class InspieAPI(object):
             if self.media_configure(upload_id, photo, caption):
                 self.expose()
                 print(self.last_json.get("status"))
+                return True
+        return False
+
+    def upload_Video(self, video, thumbnail, caption=None, upload_id=None, is_sidecar=None):
+        if upload_id is None:
+            upload_id = str(int(time.time() * 1000))
+        data = {'upload_id': upload_id,
+                '_csrftoken': self.token,
+                'media_type': '2',
+                '_uuid': self.uuid}
+        if is_sidecar:
+            data['is_sidecar'] = '1'
+        m = MultipartEncoder(data, boundary=self.uuid)
+        self.s.headers.update({'X-IG-Capabilities': '3Q4=',
+                               'X-IG-Connection-Type': 'WIFI',
+                               'Host': 'i.instagram.com',
+                               'Cookie2': '$Version=1',
+                               'Accept-Language': 'en-US',
+                               'Accept-Encoding': 'gzip, deflate',
+                               'Content-type': m.content_type,
+                               'Connection': 'keep-alive',
+                               'User-Agent': self.USER_AGENT})
+        response = self.s.post(self.API_URL + "upload/video/", data=m.to_string())
+        if response.status_code == 200:
+            body = json.loads(response.text)
+            upload_url = body['video_upload_urls'][3]['url']
+            upload_job = body['video_upload_urls'][3]['job']
+
+            video_data = open(video, 'rb').read()
+            request_size = int(math.floor(len(video_data) / 4))
+            last_request_extra = (len(video_data) - (request_size * 3))
+
+            headers = copy.deepcopy(self.s.headers)
+            self.s.headers.update({'X-IG-Capabilities': '3Q4=',
+                                   'X-IG-Connection-Type': 'WIFI',
+                                   'Cookie2': '$Version=1',
+                                   'Accept-Language': 'en-US',
+                                   'Accept-Encoding': 'gzip, deflate',
+                                   'Content-type': 'application/octet-stream',
+                                   'Session-ID': upload_id,
+                                   'Connection': 'keep-alive',
+                                   'Content-Disposition': 'attachment; filename="video.mov"',
+                                   'job': upload_job,
+                                   'Host': 'upload.instagram.com',
+                                   'User-Agent': self.USER_AGENT})
+            for i in range(0, 4):
+                start = i * request_size
+                if i == 3:
+                    end = i * request_size + last_request_extra
+                else:
+                    end = (i + 1) * request_size
+                length = last_request_extra if i == 3 else request_size
+                content_range = "bytes {start}-{end}/{lenVideo}".format(start=start, end=(end - 1),
+                                                                        lenVideo=len(video_data)).encode('utf-8')
+
+                self.s.headers.update({'Content-Length': str(end - start),
+                                       'Content-Range': content_range, })
+                response = self.s.post(upload_url, data=video_data[start:start + length])
+            self.s.headers = headers
+
+            if response.status_code == 200:
+                if self.video_configure(upload_id, video, thumbnail, caption):
+                    self.expose()
         return False
 
     def expose(self):

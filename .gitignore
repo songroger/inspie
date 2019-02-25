@@ -69,3 +69,5 @@ test*.ipynb
 
 # test files
 bin/etcd*
+
+dev
