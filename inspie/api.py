@@ -251,6 +251,7 @@ class InspieAPI(object):
             if response.status_code == 200:
                 if self.video_configure(upload_id, video, thumbnail, caption):
                     self.expose()
+                    return True
         return False
 
     def expose(self):
