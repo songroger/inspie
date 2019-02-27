@@ -254,6 +254,14 @@ class InspieAPI(object):
                     return True
         return False
 
+    def delete_media(self, media_id, media_type=1):
+        data = json.dumps({'_uuid': self.uuid,
+                           '_uid': self.username_id,
+                           '_csrftoken': self.token,
+                           'media_type': media_type,
+                           'media_id': media_id})
+        return self.send_request('media/' + str(media_id) + '/delete/', generate_signature(data))
+
     def expose(self):
         data = json.dumps({'_uuid': self.uuid,
                            '_uid': self.username_id,
