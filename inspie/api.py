@@ -262,6 +262,13 @@ class InspieAPI(object):
                            'media_id': media_id})
         return self.send_request('media/' + str(media_id) + '/delete/', generate_signature(data))
 
+    def follow(self, user_id):
+        data = json.dumps({'_uuid': self.uuid,
+                           '_uid': self.username_id,
+                           'user_id': user_id,
+                           '_csrftoken': self.token})
+        return self.send_request('friendships/create/' + str(user_id) + '/', generate_signature(data))
+
     def expose(self):
         data = json.dumps({'_uuid': self.uuid,
                            '_uid': self.username_id,
