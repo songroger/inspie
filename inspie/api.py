@@ -269,6 +269,27 @@ class InspieAPI(object):
                            '_csrftoken': self.token})
         return self.send_request('friendships/create/' + str(user_id) + '/', generate_signature(data))
 
+    def unfollow(self, user_id):
+        data = json.dumps({'_uuid': self.uuid,
+                           '_uid': self.username_id,
+                           'user_id': user_id,
+                           '_csrftoken': self.token})
+        return self.send_request('friendships/destroy/' + str(user_id) + '/', generate_signature(data))
+
+    def like(self, media_id):
+        data = json.dumps({'_uuid': self.uuid,
+                           '_uid': self.username_id,
+                           '_csrftoken': self.token,
+                           'media_id': media_id})
+        return self.send_request('media/' + str(media_id) + '/like/', generate_signature(data))
+
+    def unlike(self, media_id):
+        data = json.dumps({'_uuid': self.uuid,
+                           '_uid': self.username_id,
+                           '_csrftoken': self.token,
+                           'media_id': media_id})
+        return self.send_request('media/' + str(media_id) + '/unlike/', generate_signature(data))
+
     def expose(self):
         data = json.dumps({'_uuid': self.uuid,
                            '_uid': self.username_id,
