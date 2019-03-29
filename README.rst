@@ -21,6 +21,16 @@ It’s the freedom to manage instagram api on an easy way.
 
     pip install git+https://github.com/songroger/inspie.git@master
 
+- Features
+:::::::::
+
+    1. photo、video moment for your instagram account
+    2. delete media by id
+    3. follow and unfollow user by id
+    4. like and unlike media by id
+    
+    ....
+
 - Usage
 :::::::::
 
