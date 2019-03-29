@@ -29,7 +29,7 @@ It’s the freedom to manage instagram api on an easy way.
     3. follow and unfollow user by id
     4. like and unlike media by id
     
-    ....
+    ...
 
 - Usage
 :::::::::
